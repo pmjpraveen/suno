@@ -11,29 +11,35 @@ import SwiftUI
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
-    var menuBarManager: MenuBarManager!
+    private var menuBarManager: MenuBarManager!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        print("🟢 AppDelegate: applicationDidFinishLaunching started")
+        
         // Hide from Dock - menu bar only app
         NSApp.setActivationPolicy(.accessory)
+        print("🟢 AppDelegate: Set activation policy to .accessory")
         
         // Create status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        print("🟢 AppDelegate: Created status item")
         
-        // Initialize menu bar manager first
-        menuBarManager = MenuBarManager(statusItem: statusItem, popover: nil)
-        
-        // Setup popover with SwiftUI content
-        setupPopover()
-        
-        // Connect popover to menu bar manager
-        menuBarManager.popover = popover
-    }
-    
-    private func setupPopover() {
+        // Create popover first (without content)
         popover = NSPopover()
         popover.contentSize = NSSize(width: 350, height: 500)
-        popover.behavior = .transient // Close when clicking outside
+        popover.behavior = .transient
+        print("🟢 AppDelegate: Created popover")
+        
+        // Initialize menu bar manager with popover
+        menuBarManager = MenuBarManager(statusItem: statusItem, popover: popover)
+        print("🟢 AppDelegate: Created MenuBarManager")
+        
+        // Setup popover content with menu bar manager
+        setupPopoverContent()
+        print("🟢 AppDelegate: Setup complete!")
+    }
+    
+    private func setupPopoverContent() {
         popover.contentViewController = NSHostingController(
             rootView: PopoverContentView()
                 .environmentObject(menuBarManager)

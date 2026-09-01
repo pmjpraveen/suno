@@ -8,11 +8,9 @@
 import SwiftUI
 
 struct RecordingControlsView: View {
-    @Environment(RecordingViewModel.self) private var viewModel
+    @ObservedObject var viewModel: RecordingViewModel
     
     var body: some View {
-        @Bindable var vm = viewModel
-        
         VStack(spacing: 16) {
             // Recording State Indicator
             HStack(spacing: 12) {
@@ -81,7 +79,7 @@ struct RecordingControlsView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     
-                    Picker("Format", selection: $vm.selectedFormat) {
+                    Picker("Format", selection: $viewModel.selectedFormat) {
                         ForEach(AudioFormat.allCases, id: \.self) { format in
                             Text(format.displayName).tag(format)
                         }
@@ -161,8 +159,7 @@ struct RecordingStateIndicator: View {
 }
 
 #Preview {
-    RecordingControlsView()
-        .environment(RecordingViewModel())
+    RecordingControlsView(viewModel: RecordingViewModel())
         .frame(width: 350)
         .padding()
 }

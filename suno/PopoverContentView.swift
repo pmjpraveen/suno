@@ -6,22 +6,23 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct PopoverContentView: View {
-    @State private var viewModel = RecordingViewModel()
+    @StateObject private var viewModel = RecordingViewModel()
     @EnvironmentObject var menuBarManager: MenuBarManager
     
     var body: some View {
         VStack(spacing: 0) {
             // Recording Controls Section
-            RecordingControlsView()
+            RecordingControlsView(viewModel: viewModel)
                 .padding()
                 .background(Color(nsColor: .controlBackgroundColor))
             
             Divider()
             
             // Recordings List Section
-            RecordingListView()
+            RecordingListView(viewModel: viewModel)
                 .frame(height: 300)
             
             Divider()
@@ -46,7 +47,6 @@ struct PopoverContentView: View {
             .background(Color(nsColor: .controlBackgroundColor))
         }
         .frame(width: 350)
-        .environment(viewModel)
         .alert("Error", isPresented: $viewModel.isShowingError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -66,7 +66,11 @@ struct PopoverContentView: View {
 }
 
 #Preview {
-    PopoverContentView()
-        .environmentObject(MenuBarManager(statusItem: NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength), popover: nil))
+    let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    let popover = NSPopover()
+    let manager = MenuBarManager(statusItem: statusItem, popover: popover)
+    
+    return PopoverContentView()
+        .environmentObject(manager)
 }
 

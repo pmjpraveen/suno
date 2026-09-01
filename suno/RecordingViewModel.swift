@@ -7,18 +7,20 @@
 
 import Foundation
 import AVFoundation
+import AppKit
+import Combine
 
-@Observable
-class RecordingViewModel {
+class RecordingViewModel: ObservableObject {
     // MARK: - Services
     private let audioService = AudioRecorderService()
     private let storageService = RecordingStorageService.shared
+    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Published State
-    var recordings: [Recording] = []
-    var selectedFormat: AudioFormat = .m4a
-    var errorMessage: String?
-    var isShowingError = false
+    @Published var recordings: [Recording] = []
+    @Published var selectedFormat: AudioFormat = .m4a
+    @Published var errorMessage: String?
+    @Published var isShowingError = false
     
     // Passthrough from audio service
     var recordingState: RecordingState {

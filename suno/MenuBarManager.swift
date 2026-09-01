@@ -11,7 +11,7 @@ import Combine
 
 class MenuBarManager: ObservableObject {
     private var statusItem: NSStatusItem
-    var popover: NSPopover?
+    private var popover: NSPopover
     
     @Published var recordingState: RecordingState = .idle {
         didSet {
@@ -19,7 +19,7 @@ class MenuBarManager: ObservableObject {
         }
     }
     
-    init(statusItem: NSStatusItem, popover: NSPopover?) {
+    init(statusItem: NSStatusItem, popover: NSPopover) {
         self.statusItem = statusItem
         self.popover = popover
         
@@ -69,23 +69,33 @@ class MenuBarManager: ObservableObject {
     }
     
     @objc private func togglePopover(_ sender: AnyObject?) {
-        guard let button = statusItem.button else { return }
+        print("🔵 togglePopover called!")
+        guard let button = statusItem.button else {
+            print("❌ No status button found")
+            return
+        }
+        
+        print("🔵 Button found, event type: \(String(describing: NSApp.currentEvent?.type))")
         
         // Check if it's a right-click
         if let event = NSApp.currentEvent, event.type == .rightMouseUp {
+            print("🔵 Right click detected, showing context menu")
             showContextMenu()
             return
         }
         
         // Toggle popover on left click
-        if let popover = popover {
-            if popover.isShown {
-                popover.performClose(sender)
-            } else {
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-                // Activate app to receive keyboard events
-                NSApp.activate(ignoringOtherApps: true)
-            }
+        print("🔵 Popover isShown: \(popover.isShown)")
+        if popover.isShown {
+            print("🔵 Closing popover")
+            popover.performClose(sender)
+        } else {
+            print("🔵 Opening popover")
+            print("🔵 Popover has content view: \(popover.contentViewController != nil)")
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            // Activate app to receive keyboard events
+            NSApp.activate(ignoringOtherApps: true)
+            print("🔵 Popover shown, isShown now: \(popover.isShown)")
         }
     }
     
@@ -108,6 +118,6 @@ class MenuBarManager: ObservableObject {
     }
     
     func closePopover() {
-        popover?.performClose(nil)
+        popover.performClose(nil)
     }
 }

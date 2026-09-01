@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct RecordingListView: View {
-    @Environment(RecordingViewModel.self) private var viewModel
+    @ObservedObject var viewModel: RecordingViewModel
     
     var body: some View {
         VStack(spacing: 0) {
@@ -92,7 +93,6 @@ struct RecordingListView: View {
 }
 
 #Preview {
-    RecordingListView()
-        .environment(RecordingViewModel())
+    RecordingListView(viewModel: RecordingViewModel())
         .frame(width: 350, height: 300)
 }
