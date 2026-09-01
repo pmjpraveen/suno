@@ -67,7 +67,11 @@ struct RecordingListView: View {
                                 },
                                 onShowInFinder: {
                                     viewModel.showInFinder(recording)
-                                }
+                                },
+                                onSelect: {
+                                    openDetailWindow(for: recording)
+                                },
+                                transcript: viewModel.getTranscript(for: recording)
                             )
                         }
                     }
@@ -89,6 +93,21 @@ struct RecordingListView: View {
         if alert.runModal() == .alertFirstButtonReturn {
             viewModel.deleteRecording(recording)
         }
+    }
+    
+    private func openDetailWindow(for recording: Recording) {
+        let detailView = RecordingDetailView(recording: recording, viewModel: viewModel)
+        let hostingController = NSHostingController(rootView: detailView)
+        
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = recording.displayTitle
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.setContentSize(NSSize(width: 700, height: 600))
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        
+        // Keep window alive
+        window.isReleasedWhenClosed = false
     }
 }
 

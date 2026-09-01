@@ -13,6 +13,12 @@
 		FCF1FF16304733FE00F1D7F5 /* AppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF15304733FE00F1D7F5 /* AppMonitor.swift */; };
 		FCF1FF1A3047344E00F1D7F5 /* MeetingPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF193047344E00F1D7F5 /* MeetingPromptView.swift */; };
 		FCF1FF1C304736BB00F1D7F5 /* MeetingDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF1B304736BB00F1D7F5 /* MeetingDetector.swift */; };
+		FCF1FF1E30473B2E00F1D7F5 /* TranscriptionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF1D30473B2E00F1D7F5 /* TranscriptionStatus.swift */; };
+		FCF1FF2030473B4C00F1D7F5 /* TranscriptSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF1F30473B4C00F1D7F5 /* TranscriptSegment.swift */; };
+		FCF1FF2230473B6800F1D7F5 /* Transcript.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF2130473B6800F1D7F5 /* Transcript.swift */; };
+		FCF1FF2430473B8900F1D7F5 /* TranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF2330473B8900F1D7F5 /* TranscriptionService.swift */; };
+		FCF1FF2630473BA300F1D7F5 /* AppleSpeechTranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF2530473BA300F1D7F5 /* AppleSpeechTranscriptionService.swift */; };
+		FCF1FF2830473BF500F1D7F5 /* TranscriptStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF2730473BF500F1D7F5 /* TranscriptStorageService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +29,12 @@
 		FCF1FF15304733FE00F1D7F5 /* AppMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMonitor.swift; sourceTree = "<group>"; };
 		FCF1FF193047344E00F1D7F5 /* MeetingPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingPromptView.swift; sourceTree = "<group>"; };
 		FCF1FF1B304736BB00F1D7F5 /* MeetingDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingDetector.swift; sourceTree = "<group>"; };
+		FCF1FF1D30473B2E00F1D7F5 /* TranscriptionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionStatus.swift; sourceTree = "<group>"; };
+		FCF1FF1F30473B4C00F1D7F5 /* TranscriptSegment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptSegment.swift; sourceTree = "<group>"; };
+		FCF1FF2130473B6800F1D7F5 /* Transcript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transcript.swift; sourceTree = "<group>"; };
+		FCF1FF2330473B8900F1D7F5 /* TranscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionService.swift; sourceTree = "<group>"; };
+		FCF1FF2530473BA300F1D7F5 /* AppleSpeechTranscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSpeechTranscriptionService.swift; sourceTree = "<group>"; };
+		FCF1FF2730473BF500F1D7F5 /* TranscriptStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptStorageService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -47,6 +59,12 @@
 		FC91260030469CF700B63AED = {
 			isa = PBXGroup;
 			children = (
+				FCF1FF2730473BF500F1D7F5 /* TranscriptStorageService.swift */,
+				FCF1FF2530473BA300F1D7F5 /* AppleSpeechTranscriptionService.swift */,
+				FCF1FF2330473B8900F1D7F5 /* TranscriptionService.swift */,
+				FCF1FF2130473B6800F1D7F5 /* Transcript.swift */,
+				FCF1FF1F30473B4C00F1D7F5 /* TranscriptSegment.swift */,
+				FCF1FF1D30473B2E00F1D7F5 /* TranscriptionStatus.swift */,
 				FCF1FF1B304736BB00F1D7F5 /* MeetingDetector.swift */,
 				FCF1FF193047344E00F1D7F5 /* MeetingPromptView.swift */,
 				FCF1FF15304733FE00F1D7F5 /* AppMonitor.swift */,
@@ -142,10 +160,16 @@
 			files = (
 				FCF1FF1C304736BB00F1D7F5 /* MeetingDetector.swift in Sources */,
 				FCF1FF0E304730A800F1D7F5 /* Meeting.swift in Sources */,
+				FCF1FF2030473B4C00F1D7F5 /* TranscriptSegment.swift in Sources */,
 				FCF1FF1A3047344E00F1D7F5 /* MeetingPromptView.swift in Sources */,
 				FCF1FF16304733FE00F1D7F5 /* AppMonitor.swift in Sources */,
+				FCF1FF2830473BF500F1D7F5 /* TranscriptStorageService.swift in Sources */,
 				FCF1FF143047312D00F1D7F5 /* MeetingMatcher.swift in Sources */,
+				FCF1FF2430473B8900F1D7F5 /* TranscriptionService.swift in Sources */,
+				FCF1FF1E30473B2E00F1D7F5 /* TranscriptionStatus.swift in Sources */,
+				FCF1FF2230473B6800F1D7F5 /* Transcript.swift in Sources */,
 				FCF1FF123047310400F1D7F5 /* CalendarService.swift in Sources */,
+				FCF1FF2630473BA300F1D7F5 /* AppleSpeechTranscriptionService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -11,6 +11,8 @@ struct RecordingRowView: View {
     let recording: Recording
     let onDelete: () -> Void
     let onShowInFinder: () -> Void
+    let onSelect: (() -> Void)?
+    var transcript: Transcript? = nil
     
     @State private var isHovered = false
     
@@ -62,6 +64,11 @@ struct RecordingRowView: View {
                             .lineLimit(1)
                     }
                 }
+                
+                // Transcript status indicator
+                if let transcript = transcript {
+                    transcriptStatusIndicator(for: transcript.status)
+                }
             }
             
             Spacer()
@@ -92,6 +99,9 @@ struct RecordingRowView: View {
         .cornerRadius(8)
         .onHover { hovering in
             isHovered = hovering
+        }
+        .onTapGesture {
+            onSelect?()
         }
         .contextMenu {
             Button("Show in Finder") {
@@ -139,6 +149,32 @@ struct RecordingRowView: View {
             return "\(participants.count) participants"
         }
     }
+    
+    @ViewBuilder
+    private func transcriptStatusIndicator(for status: TranscriptionStatus) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: status.icon)
+                .font(.caption2)
+            Text(status.displayText)
+                .font(.caption2)
+        }
+        .foregroundStyle(statusColor(for: status))
+    }
+    
+    private func statusColor(for status: TranscriptionStatus) -> Color {
+        switch status {
+        case .pending:
+            return .orange
+        case .transcribing:
+            return .blue
+        case .completed:
+            return .green
+        case .failed:
+            return .red
+        case .cancelled:
+            return .gray
+        }
+    }
 }
 
 #Preview {
@@ -153,7 +189,8 @@ struct RecordingRowView: View {
                 fileSize: 5_000_000
             ),
             onDelete: {},
-            onShowInFinder: {}
+            onShowInFinder: {},
+            onSelect: {}
         )
         
         RecordingRowView(
@@ -166,7 +203,8 @@ struct RecordingRowView: View {
                 fileSize: 12_000_000
             ),
             onDelete: {},
-            onShowInFinder: {}
+            onShowInFinder: {},
+            onSelect: {}
         )
     }
     .frame(width: 350)

@@ -17,6 +17,8 @@ class RecordingViewModel: ObservableObject {
     private let calendarService = CalendarService()
     private let appMonitor = AppMonitor()
     private let meetingDetector: MeetingDetector
+    private let transcriptionService: TranscriptionService
+    private let transcriptStorage = TranscriptStorageService.shared
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Published State
@@ -32,6 +34,10 @@ class RecordingViewModel: ObservableObject {
     @Published var hasCalendarPermission: Bool = false
     @Published var isShowingMeetingPicker = false
     @Published var isShowingMeetingPrompt = false
+    
+    // Transcription
+    @Published var transcripts: [UUID: Transcript] = [:]  // Recording ID -> Transcript
+    @Published var hasSpeechPermission: Bool = false
     
     // Passthrough from audio service
     var recordingState: RecordingState {
@@ -72,12 +78,15 @@ class RecordingViewModel: ObservableObject {
     
     init() {
         print("🎬 RecordingViewModel INIT started")
+        transcriptionService = AppleSpeechTranscriptionService()
         meetingDetector = MeetingDetector(appMonitor: appMonitor, calendarService: calendarService)
         print("✅ MeetingDetector created")
         loadRecordings()
         loadSelectedFormat()
+        loadTranscripts()
         setupCalendarService()
         setupMeetingDetection()
+        checkSpeechPermission()
         print("✅ RecordingViewModel INIT complete")
         
         // Force check accessibility permission
@@ -182,6 +191,8 @@ class RecordingViewModel: ObservableObject {
                     
                     await MainActor.run {
                         saveRecording(recording)
+                        // Auto-start transcription
+                        startTranscription(for: recording)
                         // Clear current meeting after saving
                         currentMeeting = nil
                         suggestedMeeting = nil
@@ -350,5 +361,131 @@ class RecordingViewModel: ObservableObject {
         }
         
         return calendarService.fetchEvent(withID: eventID)
+    }
+    
+    // MARK: - Transcription Methods
+    
+    private func checkSpeechPermission() {
+        Task {
+            hasSpeechPermission = await transcriptionService.checkAvailability()
+            print("🎤 Speech recognition available: \(hasSpeechPermission)")
+        }
+    }
+    
+    func requestSpeechPermission() {
+        Task {
+            do {
+                let granted = try await transcriptionService.requestPermission()
+                await MainActor.run {
+                    hasSpeechPermission = granted
+                }
+            } catch {
+                await MainActor.run {
+                    handleError(error)
+                }
+            }
+        }
+    }
+    
+    private func loadTranscripts() {
+        // Load all existing transcripts
+        if let allTranscripts = try? transcriptStorage.loadAllTranscripts() {
+            for transcript in allTranscripts {
+                transcripts[transcript.recordingID] = transcript
+            }
+            print("📄 Loaded \(allTranscripts.count) transcripts")
+        }
+    }
+    
+    func getTranscript(for recording: Recording) -> Transcript? {
+        return transcripts[recording.id]
+    }
+    
+    private func startTranscription(for recording: Recording) {
+        print("🚀 Auto-starting transcription for: \(recording.fileName)")
+        
+        // Create pending transcript
+        let transcript = Transcript(recordingID: recording.id, status: .pending)
+        transcripts[recording.id] = transcript
+        
+        // Save pending state
+        try? transcriptStorage.saveTranscript(transcript)
+        
+        // Start transcription in background
+        Task {
+            do {
+                // Request permission if not yet granted
+                if !hasSpeechPermission {
+                    _ = try await transcriptionService.requestPermission()
+                    await MainActor.run {
+                        hasSpeechPermission = true
+                    }
+                }
+                
+                // Update to transcribing status
+                await MainActor.run {
+                    var updatedTranscript = transcript
+                    updatedTranscript.status = .transcribing
+                    transcripts[recording.id] = updatedTranscript
+                    try? transcriptStorage.saveTranscript(updatedTranscript)
+                }
+                
+                // Perform transcription
+                let completedTranscript = try await transcriptionService.transcribe(
+                    recording: recording,
+                    progressHandler: { progress in
+                        Task { @MainActor in
+                            if var transcript = self.transcripts[recording.id] {
+                                transcript.progress = progress
+                                self.transcripts[recording.id] = transcript
+                            }
+                        }
+                    }
+                )
+                
+                // Save completed transcript
+                await MainActor.run {
+                    transcripts[recording.id] = completedTranscript
+                    try? transcriptStorage.saveTranscript(completedTranscript)
+                    print("✅ Transcription saved for: \(recording.fileName)")
+                }
+                
+            } catch {
+                // Handle transcription failure
+                await MainActor.run {
+                    var failedTranscript = transcript
+                    failedTranscript.status = .failed
+                    failedTranscript.errorMessage = error.localizedDescription
+                    failedTranscript.completedAt = Date()
+                    transcripts[recording.id] = failedTranscript
+                    try? transcriptStorage.saveTranscript(failedTranscript)
+                    
+                    print("❌ Transcription failed: \(error.localizedDescription)")
+                    handleError(error)
+                }
+            }
+        }
+    }
+    
+    func retryTranscription(for recording: Recording) {
+        print("🔄 Retrying transcription for: \(recording.fileName)")
+        
+        // Remove old transcript
+        transcripts.removeValue(forKey: recording.id)
+        try? transcriptStorage.deleteTranscript(for: recording.id)
+        
+        // Start new transcription
+        startTranscription(for: recording)
+    }
+    
+    func cancelTranscription(for recording: Recording) {
+        transcriptionService.cancelTranscription(for: recording.id)
+        
+        if var transcript = transcripts[recording.id] {
+            transcript.status = .cancelled
+            transcript.completedAt = Date()
+            transcripts[recording.id] = transcript
+            try? transcriptStorage.saveTranscript(transcript)
+        }
     }
 }

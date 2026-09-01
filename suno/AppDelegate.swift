@@ -42,7 +42,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupPopoverContent() {
         popover.contentViewController = NSHostingController(
             rootView: PopoverContentView()
-                .environmentObject(menuBarManager)
+                .environmentObject(menuBarManager as MenuBarManager)
         )
     }
     
