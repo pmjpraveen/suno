@@ -6,8 +6,23 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		FCF1FF0E304730A800F1D7F5 /* Meeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF0D304730A800F1D7F5 /* Meeting.swift */; };
+		FCF1FF123047310400F1D7F5 /* CalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF113047310400F1D7F5 /* CalendarService.swift */; };
+		FCF1FF143047312D00F1D7F5 /* MeetingMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF133047312D00F1D7F5 /* MeetingMatcher.swift */; };
+		FCF1FF16304733FE00F1D7F5 /* AppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF15304733FE00F1D7F5 /* AppMonitor.swift */; };
+		FCF1FF1A3047344E00F1D7F5 /* MeetingPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF193047344E00F1D7F5 /* MeetingPromptView.swift */; };
+		FCF1FF1C304736BB00F1D7F5 /* MeetingDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF1B304736BB00F1D7F5 /* MeetingDetector.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		FC91260930469CF700B63AED /* suno.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = suno.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FCF1FF0D304730A800F1D7F5 /* Meeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Meeting.swift; sourceTree = "<group>"; };
+		FCF1FF113047310400F1D7F5 /* CalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarService.swift; sourceTree = "<group>"; };
+		FCF1FF133047312D00F1D7F5 /* MeetingMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingMatcher.swift; sourceTree = "<group>"; };
+		FCF1FF15304733FE00F1D7F5 /* AppMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMonitor.swift; sourceTree = "<group>"; };
+		FCF1FF193047344E00F1D7F5 /* MeetingPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingPromptView.swift; sourceTree = "<group>"; };
+		FCF1FF1B304736BB00F1D7F5 /* MeetingDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingDetector.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,6 +47,12 @@
 		FC91260030469CF700B63AED = {
 			isa = PBXGroup;
 			children = (
+				FCF1FF1B304736BB00F1D7F5 /* MeetingDetector.swift */,
+				FCF1FF193047344E00F1D7F5 /* MeetingPromptView.swift */,
+				FCF1FF15304733FE00F1D7F5 /* AppMonitor.swift */,
+				FCF1FF133047312D00F1D7F5 /* MeetingMatcher.swift */,
+				FCF1FF113047310400F1D7F5 /* CalendarService.swift */,
+				FCF1FF0D304730A800F1D7F5 /* Meeting.swift */,
 				FC91260B30469CF700B63AED /* suno */,
 				FC91260A30469CF700B63AED /* Products */,
 			);
@@ -119,6 +140,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FCF1FF1C304736BB00F1D7F5 /* MeetingDetector.swift in Sources */,
+				FCF1FF0E304730A800F1D7F5 /* Meeting.swift in Sources */,
+				FCF1FF1A3047344E00F1D7F5 /* MeetingPromptView.swift in Sources */,
+				FCF1FF16304733FE00F1D7F5 /* AppMonitor.swift in Sources */,
+				FCF1FF143047312D00F1D7F5 /* MeetingMatcher.swift in Sources */,
+				FCF1FF123047310400F1D7F5 /* CalendarService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

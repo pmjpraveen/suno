@@ -157,7 +157,10 @@ class AudioRecorderService: NSObject {
             startTime: startTime,
             endTime: endTime,
             duration: totalDuration,
-            fileSize: fileSize
+            fileSize: fileSize,
+            calendarEventID: nil,
+            meetingTitle: nil,
+            meetingParticipants: nil
         )
         
         // Reset state

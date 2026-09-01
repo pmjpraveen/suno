@@ -54,6 +54,19 @@ struct PopoverContentView: View {
                 Text(errorMessage)
             }
         }
+        .sheet(isPresented: $viewModel.isShowingMeetingPrompt) {
+            if let meeting = viewModel.currentMeeting {
+                MeetingPromptView(
+                    meeting: meeting,
+                    onStartRecording: {
+                        viewModel.acceptMeetingPrompt()
+                    },
+                    onDecline: {
+                        viewModel.declineMeetingPrompt()
+                    }
+                )
+            }
+        }
         .onChange(of: viewModel.recordingState) { oldValue, newValue in
             // Update menu bar icon when recording state changes
             menuBarManager.recordingState = newValue

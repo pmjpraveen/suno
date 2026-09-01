@@ -102,6 +102,12 @@ class MenuBarManager: ObservableObject {
     private func showContextMenu() {
         let menu = NSMenu()
         
+        // Add accessibility permission option
+        if !AXIsProcessTrusted() {
+            menu.addItem(NSMenuItem(title: "⚠️ Grant Accessibility Permission", action: #selector(requestAccessibility), keyEquivalent: ""))
+            menu.addItem(NSMenuItem.separator())
+        }
+        
         menu.addItem(NSMenuItem(title: "Quit Suno", action: #selector(quitApp), keyEquivalent: "q"))
         
         statusItem.menu = menu
@@ -110,6 +116,20 @@ class MenuBarManager: ObservableObject {
         // Remove menu after showing (so left-click still works)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             self?.statusItem.menu = nil
+        }
+    }
+    
+    @objc private func requestAccessibility() {
+        let alert = NSAlert()
+        alert.messageText = "Accessibility Permission Required"
+        alert.informativeText = "Suno needs Accessibility permission to detect when you join meetings in Zoom, Teams, or Google Meet.\n\nClick OK to open System Settings, then:\n1. Find 'Suno' in the list\n2. Check the box next to it\n3. Restart Suno"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Open System Settings")
+        alert.addButton(withTitle: "Cancel")
+        
+        if alert.runModal() == .alertFirstButtonReturn {
+            // Open System Settings to Accessibility
+            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
         }
     }
     

@@ -17,8 +17,12 @@ struct Recording: Identifiable, Codable {
     var duration: TimeInterval
     var fileSize: Int64
     
-    // Future-ready fields for calendar and AI integration
+    // Calendar integration
     var calendarEventID: String?
+    var meetingTitle: String?
+    var meetingParticipants: [String]?
+    
+    // Future AI integration
     var transcription: String?
     var summary: String?
     
@@ -32,6 +36,8 @@ struct Recording: Identifiable, Codable {
         duration: TimeInterval = 0,
         fileSize: Int64 = 0,
         calendarEventID: String? = nil,
+        meetingTitle: String? = nil,
+        meetingParticipants: [String]? = nil,
         transcription: String? = nil,
         summary: String? = nil
     ) {
@@ -44,8 +50,24 @@ struct Recording: Identifiable, Codable {
         self.duration = duration
         self.fileSize = fileSize
         self.calendarEventID = calendarEventID
+        self.meetingTitle = meetingTitle
+        self.meetingParticipants = meetingParticipants
         self.transcription = transcription
         self.summary = summary
+    }
+    
+    // MARK: - Computed Properties
+    
+    var hasMeeting: Bool {
+        calendarEventID != nil && calendarEventID != "unscheduled"
+    }
+    
+    var isUnscheduledMeeting: Bool {
+        calendarEventID == "unscheduled"
+    }
+    
+    var displayTitle: String {
+        meetingTitle ?? "Recording"
     }
     
     var formattedDuration: String {

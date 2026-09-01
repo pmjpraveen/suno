@@ -12,6 +12,24 @@ struct RecordingControlsView: View {
     
     var body: some View {
         VStack(spacing: 16) {
+            // Meeting badge (when recording)
+            if viewModel.recordingState != .idle, let meeting = viewModel.currentMeeting {
+                HStack {
+                    MeetingBadgeView(meeting: meeting, compact: false)
+                    
+                    if viewModel.recordingState != .stopped {
+                        Button(action: {
+                            viewModel.showMeetingPicker()
+                        }) {
+                            Image(systemName: "pencil.circle")
+                                .font(.title3)
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Change Meeting")
+                    }
+                }
+            }
+            
             // Recording State Indicator
             HStack(spacing: 12) {
                 // State icon with animation
@@ -108,6 +126,9 @@ struct RecordingControlsView: View {
                 .background(Color.orange.opacity(0.1))
                 .cornerRadius(8)
             }
+        }
+        .sheet(isPresented: $viewModel.isShowingMeetingPicker) {
+            MeetingPickerView(viewModel: viewModel)
         }
     }
 }

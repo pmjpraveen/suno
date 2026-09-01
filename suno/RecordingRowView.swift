@@ -17,14 +17,15 @@ struct RecordingRowView: View {
     var body: some View {
         HStack(spacing: 12) {
             // Icon
-            Image(systemName: "waveform")
+            Image(systemName: recording.hasMeeting ? "calendar.badge.checkmark" : "waveform")
                 .font(.title3)
-                .foregroundStyle(.blue)
+                .foregroundStyle(recording.hasMeeting ? .blue : .gray)
                 .frame(width: 24)
             
             // Recording Info
             VStack(alignment: .leading, spacing: 4) {
-                Text(recording.fileName)
+                // Meeting title or filename
+                Text(recording.displayTitle)
                     .font(.body)
                     .lineLimit(1)
                 
@@ -48,6 +49,18 @@ struct RecordingRowView: View {
                     Text(recording.format.fileExtension.uppercased())
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+                
+                // Participants if available
+                if let participants = recording.meetingParticipants, !participants.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "person.2")
+                            .font(.caption2)
+                        Text(participantsText(participants))
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .lineLimit(1)
+                    }
                 }
             }
             
@@ -116,6 +129,14 @@ struct RecordingRowView: View {
             formatter.dateStyle = .medium
             formatter.timeStyle = .short
             return formatter.string(from: date)
+        }
+    }
+    
+    private func participantsText(_ participants: [String]) -> String {
+        if participants.count <= 2 {
+            return participants.joined(separator: ", ")
+        } else {
+            return "\(participants.count) participants"
         }
     }
 }
