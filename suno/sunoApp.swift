@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct sunoApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        // Empty scene - this is a menu bar only app
+        Settings {
+            EmptyView()
         }
     }
 }
