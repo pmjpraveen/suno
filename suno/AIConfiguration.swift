@@ -30,6 +30,9 @@ struct AIConfiguration {
     
     // MARK: - Service Selection
     
+    /// Prefer Apple Intelligence (on-device) when available on macOS 15+
+    static let preferAppleIntelligence = true
+    
     /// Whether to use Foundation Models (on-device) when available
     static let preferFoundationModels = true
     

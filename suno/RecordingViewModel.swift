@@ -87,12 +87,19 @@ class RecordingViewModel: ObservableObject {
         print("🎬 RecordingViewModel INIT started")
         transcriptionService = AppleSpeechTranscriptionService()
         
-        // Initialize AI analysis service
-        let apiKey = AIConfiguration.openAIAPIKey
-        aiAnalysisService = LLMAnalysisService(
-            useFoundationModels: AIConfiguration.preferFoundationModels,
-            apiKey: apiKey
-        )
+        // Initialize AI analysis service - prefer Apple Intelligence
+        if #available(macOS 15.0, *), AIConfiguration.preferAppleIntelligence {
+            aiAnalysisService = AppleIntelligenceService()
+            print("✅ Using Apple Intelligence (on-device)")
+        } else {
+            // Fallback to OpenAI
+            let apiKey = AIConfiguration.openAIAPIKey
+            aiAnalysisService = LLMAnalysisService(
+                useFoundationModels: false,
+                apiKey: apiKey
+            )
+            print("⚠️ Using OpenAI (Apple Intelligence not available)")
+        }
         
         meetingDetector = MeetingDetector(appMonitor: appMonitor, calendarService: calendarService)
         print("✅ MeetingDetector created")
