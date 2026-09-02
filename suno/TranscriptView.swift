@@ -21,6 +21,13 @@ struct TranscriptView: View {
                 Text("Transcript")
                     .font(.headline)
                 
+                // Language indicator
+                if let transcript = transcript, let language = transcript.language {
+                    Text(language.flag)
+                        .font(.caption)
+                        .help(language.displayName)
+                }
+                
                 Spacer()
                 
                 if let transcript = transcript {

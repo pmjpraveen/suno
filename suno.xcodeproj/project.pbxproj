@@ -19,6 +19,7 @@
 		FCF1FF2430473B8900F1D7F5 /* TranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF2330473B8900F1D7F5 /* TranscriptionService.swift */; };
 		FCF1FF2630473BA300F1D7F5 /* AppleSpeechTranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF2530473BA300F1D7F5 /* AppleSpeechTranscriptionService.swift */; };
 		FCF1FF2830473BF500F1D7F5 /* TranscriptStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF1FF2730473BF500F1D7F5 /* TranscriptStorageService.swift */; };
+		FCF1FF653047CA3F00F1D7F5 /* INDIAN_LANGUAGES.md in Resources */ = {isa = PBXBuildFile; fileRef = FCF1FF643047CA3F00F1D7F5 /* INDIAN_LANGUAGES.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,7 @@
 		FCF1FF2330473B8900F1D7F5 /* TranscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionService.swift; sourceTree = "<group>"; };
 		FCF1FF2530473BA300F1D7F5 /* AppleSpeechTranscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSpeechTranscriptionService.swift; sourceTree = "<group>"; };
 		FCF1FF2730473BF500F1D7F5 /* TranscriptStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptStorageService.swift; sourceTree = "<group>"; };
+		FCF1FF643047CA3F00F1D7F5 /* INDIAN_LANGUAGES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = INDIAN_LANGUAGES.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -73,6 +75,7 @@
 				FCF1FF0D304730A800F1D7F5 /* Meeting.swift */,
 				FC91260B30469CF700B63AED /* suno */,
 				FC91260A30469CF700B63AED /* Products */,
+				FCF1FF643047CA3F00F1D7F5 /* INDIAN_LANGUAGES.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -148,6 +151,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FCF1FF653047CA3F00F1D7F5 /* INDIAN_LANGUAGES.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -91,19 +91,58 @@ struct RecordingControlsView: View {
     @ViewBuilder
     private var formatSelectorSection: some View {
         if viewModel.recordingState == .idle {
-            HStack {
-                Text("Format:")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                
-                Picker("Format", selection: $viewModel.selectedFormat) {
-                    ForEach(AudioFormat.allCases, id: \.self) { format in
-                        Text(format.displayName).tag(format)
+            VStack(alignment: .leading, spacing: Layout.formatSpacing) {
+                // Audio Format
+                HStack {
+                    Text("Format:")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    
+                    Picker("Format", selection: $viewModel.selectedFormat) {
+                        ForEach(AudioFormat.allCases, id: \.self) { format in
+                            Text(format.displayName).tag(format)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: Layout.formatPickerMaxWidth)
+                    .accessibilityLabel("Audio format")
                 }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: Layout.formatPickerMaxWidth)
-                .accessibilityLabel("Audio format")
+                
+                // Language Selector
+                HStack {
+                    Text("Language:")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    
+                    Picker("Language", selection: $viewModel.selectedLanguage) {
+                        // Popular languages
+                        ForEach(Language.popular, id: \.self) { language in
+                            Text(language.nativeDisplayName).tag(language)
+                        }
+                        
+                        Divider()
+                        
+                        // Indian Languages Section
+                        Section(header: Text("Indian Languages")) {
+                            ForEach(Language.indianLanguages, id: \.self) { language in
+                                Text(language.nativeDisplayName).tag(language)
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        // International Languages
+                        Section(header: Text("International")) {
+                            ForEach(Language.internationalLanguages, id: \.self) { language in
+                                Text(language.nativeDisplayName).tag(language)
+                            }
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: Layout.languagePickerMaxWidth)
+                    .accessibilityLabel("Transcription language")
+                    .help("Select the primary language spoken in your meeting")
+                }
             }
         }
     }
@@ -188,7 +227,9 @@ private enum Layout {
     static let mainSpacing: CGFloat = 16
     static let statusSpacing: CGFloat = 12
     static let buttonSpacing: CGFloat = 12
+    static let formatSpacing: CGFloat = 8
     static let formatPickerMaxWidth: CGFloat = 200
+    static let languagePickerMaxWidth: CGFloat = 200
     static let warningPadding: CGFloat = 8
     static let warningCornerRadius: CGFloat = 8
     static let indicatorSize: CGFloat = 12

@@ -21,6 +21,11 @@ struct RecordingDetailView: View {
         viewModel.getTranscript(for: recording)
     }
     
+    var analysis: MeetingAnalysis? {
+        guard let transcript = transcript else { return nil }
+        return viewModel.getAnalysis(for: transcript)
+    }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -49,6 +54,24 @@ struct RecordingDetailView: View {
                         seekTo(time)
                     }
                 )
+                
+                // AI Analysis
+                if transcript?.status == .completed {
+                    MeetingAnalysisView(
+                        analysis: analysis,
+                        onRetry: {
+                            viewModel.startAnalysis(for: recording)
+                        },
+                        onToggleActionItem: { actionItemId in
+                            if let transcriptId = transcript?.id {
+                                viewModel.toggleActionItemCompletion(actionItemId, in: transcriptId)
+                            }
+                        },
+                        onSeek: { time in
+                            seekTo(time)
+                        }
+                    )
+                }
             }
             .padding(20)
         }

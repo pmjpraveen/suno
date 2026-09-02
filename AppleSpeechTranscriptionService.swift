@@ -40,6 +40,7 @@ class AppleSpeechTranscriptionService: TranscriptionService {
     
     func transcribe(
         recording: Recording,
+        language: suno.Language = .auto,
         progressHandler: @escaping (Double) -> Void
     ) async throws -> Transcript {
         print("🎙️ Starting transcription for: \(recording.fileName)")
@@ -55,13 +56,25 @@ class AppleSpeechTranscriptionService: TranscriptionService {
             throw TranscriptionError.emptyRecording
         }
         
-        // Create recognizer
-        guard let recognizer = SFSpeechRecognizer() else {
+        // Create recognizer with specified language
+        let recognizer: SFSpeechRecognizer?
+        if language == .auto, let locale = language.locale {
+            // Auto-detect: use default system locale
+            recognizer = SFSpeechRecognizer()
+        } else if let locale = language.locale {
+            // Use specified language locale
+            recognizer = SFSpeechRecognizer(locale: locale)
+        } else {
+            // Fallback to default recognizer for auto-detect
+            recognizer = SFSpeechRecognizer()
+        }
+        
+        guard let recognizer = recognizer else {
             throw TranscriptionError.speechRecognitionUnavailable
         }
         
         guard recognizer.isAvailable else {
-            throw TranscriptionError.speechRecognitionUnavailable
+            throw TranscriptionError.languageNotSupported(language.displayName)
         }
         
         // Store recognizer
@@ -79,7 +92,8 @@ class AppleSpeechTranscriptionService: TranscriptionService {
         
         var transcript = Transcript(
             recordingID: recording.id,
-            status: .transcribing
+            status: TranscriptionStatus.transcribing,
+            requestedLanguage: language
         )
         
         return try await withCheckedThrowingContinuation { continuation in

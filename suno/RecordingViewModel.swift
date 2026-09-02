@@ -19,6 +19,8 @@ class RecordingViewModel: ObservableObject {
     private let meetingDetector: MeetingDetector
     private let transcriptionService: TranscriptionService
     private let transcriptStorage = TranscriptStorageService.shared
+    private let aiAnalysisService: AIAnalysisService
+    private let analysisStorage = MeetingAnalysisStorageService.shared
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Published State
@@ -38,6 +40,11 @@ class RecordingViewModel: ObservableObject {
     // Transcription
     @Published var transcripts: [UUID: Transcript] = [:]  // Recording ID -> Transcript
     @Published var hasSpeechPermission: Bool = false
+    @Published var selectedLanguage: Language = .auto
+    
+    // AI Analysis
+    @Published var analyses: [UUID: MeetingAnalysis] = [:]  // Transcript ID -> Analysis
+    @Published var hasAIAnalysisAvailable: Bool = false
     
     // Passthrough from audio service
     var recordingState: RecordingState {
@@ -79,14 +86,24 @@ class RecordingViewModel: ObservableObject {
     init() {
         print("🎬 RecordingViewModel INIT started")
         transcriptionService = AppleSpeechTranscriptionService()
+        
+        // Initialize AI analysis service
+        let apiKey = AIConfiguration.openAIAPIKey
+        aiAnalysisService = LLMAnalysisService(
+            useFoundationModels: AIConfiguration.preferFoundationModels,
+            apiKey: apiKey
+        )
+        
         meetingDetector = MeetingDetector(appMonitor: appMonitor, calendarService: calendarService)
         print("✅ MeetingDetector created")
         loadRecordings()
         loadSelectedFormat()
         loadTranscripts()
+        loadAnalyses()
         setupCalendarService()
         setupMeetingDetection()
         checkSpeechPermission()
+        checkAIAnalysisAvailability()
         print("✅ RecordingViewModel INIT complete")
         
         // Force check accessibility permission
@@ -403,9 +420,14 @@ class RecordingViewModel: ObservableObject {
     
     private func startTranscription(for recording: Recording) {
         print("🚀 Auto-starting transcription for: \(recording.fileName)")
+        print("🌍 Language: \(selectedLanguage.displayName)")
         
         // Create pending transcript
-        let transcript = Transcript(recordingID: recording.id, status: .pending)
+        let transcript = Transcript(
+            recordingID: recording.id,
+            status: TranscriptionStatus.pending,
+            requestedLanguage: selectedLanguage
+        )
         transcripts[recording.id] = transcript
         
         // Save pending state
@@ -425,14 +447,15 @@ class RecordingViewModel: ObservableObject {
                 // Update to transcribing status
                 await MainActor.run {
                     var updatedTranscript = transcript
-                    updatedTranscript.status = .transcribing
+                    updatedTranscript.status = TranscriptionStatus.transcribing
                     transcripts[recording.id] = updatedTranscript
                     try? transcriptStorage.saveTranscript(updatedTranscript)
                 }
                 
-                // Perform transcription
+                // Perform transcription with selected language
                 let completedTranscript = try await transcriptionService.transcribe(
                     recording: recording,
+                    language: selectedLanguage,
                     progressHandler: { progress in
                         Task { @MainActor in
                             if var transcript = self.transcripts[recording.id] {
@@ -448,13 +471,19 @@ class RecordingViewModel: ObservableObject {
                     transcripts[recording.id] = completedTranscript
                     try? transcriptStorage.saveTranscript(completedTranscript)
                     print("✅ Transcription saved for: \(recording.fileName)")
+                    
+                    // Automatically start AI analysis after transcription completes
+                    if hasAIAnalysisAvailable {
+                        print("🧠 Auto-starting AI analysis...")
+                        startAnalysis(for: recording)
+                    }
                 }
                 
             } catch {
                 // Handle transcription failure
                 await MainActor.run {
                     var failedTranscript = transcript
-                    failedTranscript.status = .failed
+                    failedTranscript.status = TranscriptionStatus.failed
                     failedTranscript.errorMessage = error.localizedDescription
                     failedTranscript.completedAt = Date()
                     transcripts[recording.id] = failedTranscript
@@ -482,10 +511,184 @@ class RecordingViewModel: ObservableObject {
         transcriptionService.cancelTranscription(for: recording.id)
         
         if var transcript = transcripts[recording.id] {
-            transcript.status = .cancelled
+            transcript.status = TranscriptionStatus.cancelled
             transcript.completedAt = Date()
             transcripts[recording.id] = transcript
             try? transcriptStorage.saveTranscript(transcript)
         }
     }
+    
+    // MARK: - AI Analysis
+    
+    private func loadAnalyses() {
+        do {
+            let loadedAnalyses = try analysisStorage.loadAllAnalyses()
+            for analysis in loadedAnalyses {
+                analyses[analysis.transcriptId] = analysis
+            }
+            print("📚 Loaded \(loadedAnalyses.count) AI analyses")
+        } catch {
+            print("⚠️ Failed to load analyses: \(error)")
+        }
+    }
+    
+    private func checkAIAnalysisAvailability() {
+        Task {
+            let available = await aiAnalysisService.checkAvailability()
+            await MainActor.run {
+                hasAIAnalysisAvailable = available
+                print("🧠 AI Analysis available: \(available)")
+                
+                if !available {
+                    AIConfiguration.printSetupInstructions()
+                }
+            }
+        }
+    }
+    
+    func getAnalysis(for transcript: Transcript) -> MeetingAnalysis? {
+        return analyses[transcript.id]
+    }
+    
+    func startAnalysis(for recording: Recording) {
+        guard let transcript = transcripts[recording.id] else {
+            print("⚠️ No transcript found for recording: \(recording.id)")
+            return
+        }
+        
+        guard transcript.status == .completed else {
+            print("⚠️ Transcript not completed yet")
+            return
+        }
+        
+        guard hasAIAnalysisAvailable else {
+            print("⚠️ AI Analysis not available")
+            handleError(AIAnalysisError.serviceUnavailable)
+            return
+        }
+        
+        // Get meeting context
+        let meeting: Meeting?
+        if let eventID = recording.calendarEventID, eventID != "unscheduled" {
+            meeting = availableMeetings.first { $0.id == eventID }
+        } else {
+            meeting = nil
+        }
+        
+        Task {
+            do {
+                // Create pending analysis
+                var analysis = MeetingAnalysis(
+                    meetingId: recording.calendarEventID ?? "unscheduled",
+                    transcriptId: transcript.id,
+                    status: .pending
+                )
+                
+                await MainActor.run {
+                    analyses[transcript.id] = analysis
+                }
+                
+                print("🧠 Starting AI analysis for transcript: \(transcript.id)")
+                
+                // Update to analyzing
+                analysis.status = .analyzing
+                analysis.updatedAt = Date()
+                try analysisStorage.saveAnalysis(analysis)
+                
+                await MainActor.run {
+                    analyses[transcript.id] = analysis
+                }
+                
+                // Perform analysis
+                let response = try await aiAnalysisService.analyzeTranscript(
+                    transcript,
+                    meeting: meeting
+                )
+                
+                // Convert response to analysis
+                // Note: We create a new analysis with the existing ID to preserve identity
+                let responseAnalysis = response.toMeetingAnalysis(
+                    meetingId: recording.calendarEventID ?? "unscheduled",
+                    transcriptId: transcript.id
+                )
+                
+                // Create completed analysis preserving the original ID
+                let completedAnalysis = MeetingAnalysis(
+                    id: analysis.id,  // Preserve the existing ID
+                    meetingId: responseAnalysis.meetingId,
+                    transcriptId: responseAnalysis.transcriptId,
+                    overview: responseAnalysis.overview,
+                    keyPoints: responseAnalysis.keyPoints,
+                    decisions: responseAnalysis.decisions,
+                    actionItems: responseAnalysis.actionItems,
+                    mom: responseAnalysis.mom,
+                    status: .completed,
+                    createdAt: analysis.createdAt,
+                    updatedAt: Date()
+                )
+                
+                // Save and publish
+                try analysisStorage.saveAnalysis(completedAnalysis)
+                
+                await MainActor.run {
+                    analyses[transcript.id] = completedAnalysis
+                    print("✅ AI analysis completed!")
+                }
+                
+            } catch {
+                print("❌ AI analysis failed: \(error.localizedDescription)")
+                
+                var failedAnalysis = analyses[transcript.id] ?? MeetingAnalysis(
+                    meetingId: recording.calendarEventID ?? "unscheduled",
+                    transcriptId: transcript.id
+                )
+                
+                failedAnalysis.status = .failed
+                failedAnalysis.errorMessage = error.localizedDescription
+                failedAnalysis.updatedAt = Date()
+                
+                try? analysisStorage.saveAnalysis(failedAnalysis)
+                
+                await MainActor.run {
+                    analyses[transcript.id] = failedAnalysis
+                    handleError(error)
+                }
+            }
+        }
+    }
+    
+    func retryAnalysis(for recording: Recording) {
+        guard let transcript = transcripts[recording.id] else { return }
+        
+        print("🔄 Retrying AI analysis for transcript: \(transcript.id)")
+        
+        // Reset status to pending
+        if var analysis = analyses[transcript.id] {
+            analysis.status = .pending
+            analysis.errorMessage = nil
+            analysis.updatedAt = Date()
+            analyses[transcript.id] = analysis
+            try? analysisStorage.saveAnalysis(analysis)
+        }
+        
+        // Start new analysis
+        startAnalysis(for: recording)
+    }
+    
+    func toggleActionItemCompletion(_ actionItemId: UUID, in transcriptId: UUID) {
+        guard var analysis = analyses[transcriptId] else { return }
+        
+        do {
+            try analysisStorage.toggleActionItemCompletion(actionItemId, in: analysis)
+            
+            // Reload from storage to get updated version
+            if let updated = try analysisStorage.loadAnalysis(for: transcriptId) {
+                analyses[transcriptId] = updated
+            }
+        } catch {
+            print("❌ Failed to toggle action item: \(error)")
+            handleError(error)
+        }
+    }
 }
+

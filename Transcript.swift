@@ -15,6 +15,8 @@ struct Transcript: Identifiable, Codable {
     var completedAt: Date?
     var errorMessage: String?
     var progress: Double  // 0.0 to 1.0
+    var language: Language?  // Detected or specified language
+    var requestedLanguage: Language  // Language requested for transcription
     
     init(
         id: UUID = UUID(),
@@ -25,7 +27,9 @@ struct Transcript: Identifiable, Codable {
         createdAt: Date = Date(),
         completedAt: Date? = nil,
         errorMessage: String? = nil,
-        progress: Double = 0.0
+        progress: Double = 0.0,
+        language: Language? = nil,
+        requestedLanguage: Language = .auto
     ) {
         self.id = id
         self.recordingID = recordingID
@@ -36,6 +40,8 @@ struct Transcript: Identifiable, Codable {
         self.completedAt = completedAt
         self.errorMessage = errorMessage
         self.progress = progress
+        self.language = language
+        self.requestedLanguage = requestedLanguage
     }
     
     // MARK: - Computed Properties

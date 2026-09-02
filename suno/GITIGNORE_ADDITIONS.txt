@@ -1,0 +1,20 @@
+# Add these lines to your .gitignore file to protect API keys
+
+# AI Configuration (contains API keys - DO NOT COMMIT)
+ai-config.json
+**/ai-config.json
+suno/ai-config.json
+
+# macOS Application Support directory
+Library/Application Support/suno/ai-config.json
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# API Keys
+**/OPENAI_API_KEY
+*.key
+api-keys.txt
+secrets.json

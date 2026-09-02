@@ -15,10 +15,12 @@ protocol TranscriptionService {
     /// Transcribe an audio file
     /// - Parameters:
     ///   - recording: The recording to transcribe
+    ///   - language: Language for transcription (default: .auto for auto-detection)
     ///   - progressHandler: Called with progress updates (0.0 to 1.0)
     /// - Returns: Completed transcript with segments
     func transcribe(
         recording: Recording,
+        language: Language,
         progressHandler: @escaping (Double) -> Void
     ) async throws -> Transcript
     
@@ -35,6 +37,7 @@ enum TranscriptionError: LocalizedError {
     case unsupportedAudioFormat
     case emptyRecording
     case networkRequired
+    case languageNotSupported(String)
     case transcriptionFailed(String)
     case cancelled
     
@@ -52,6 +55,8 @@ enum TranscriptionError: LocalizedError {
             return "The recording is empty or too short to transcribe."
         case .networkRequired:
             return "Network connection required for transcription."
+        case .languageNotSupported(let language):
+            return "Language '\(language)' is not supported for transcription. Try auto-detection or select a different language."
         case .transcriptionFailed(let message):
             return "Transcription failed: \(message)"
         case .cancelled:
