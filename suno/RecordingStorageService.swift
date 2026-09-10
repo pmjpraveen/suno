@@ -102,7 +102,25 @@ class RecordingStorageService {
     
     func deleteRecording(_ recording: Recording, from recordings: inout [Recording]) throws {
         // Delete audio file
-        try deleteAudioFile(at: recording.fileURL)
+        if fileManager.fileExists(atPath: recording.fileURL.path) {
+            try deleteAudioFile(at: recording.fileURL)
+        }
+        
+        // Delete associated transcript file if it exists
+        let transcriptURL = applicationSupportDirectory
+            .appendingPathComponent("Transcripts")
+            .appendingPathComponent("\(recording.id).json")
+        if fileManager.fileExists(atPath: transcriptURL.path) {
+            try? fileManager.removeItem(at: transcriptURL)
+        }
+        
+        // Delete associated analysis file if it exists
+        let analysisURL = applicationSupportDirectory
+            .appendingPathComponent("Analysis")
+            .appendingPathComponent("\(recording.id).json")
+        if fileManager.fileExists(atPath: analysisURL.path) {
+            try? fileManager.removeItem(at: analysisURL)
+        }
         
         // Remove from array
         recordings.removeAll { $0.id == recording.id }

@@ -17,9 +17,9 @@ class RecordingViewModel: ObservableObject {
     private let calendarService = CalendarService()
     private let appMonitor = AppMonitor()
     private let meetingDetector: MeetingDetector
-    private let transcriptionService: TranscriptionService
+    private let transcriptionService: AppleSpeechTranscriptionService
     private let transcriptStorage = TranscriptStorageService.shared
-    private let aiAnalysisService: AIAnalysisService
+    private let aiAnalysisService = AppleIntelligenceService()
     private let analysisStorage = MeetingAnalysisStorageService.shared
     private var cancellables = Set<AnyCancellable>()
     
@@ -62,7 +62,7 @@ class RecordingViewModel: ObservableObject {
     // MARK: - Computed Properties
     
     var formattedDuration: String {
-        formatDuration(currentDuration)
+        currentDuration.formattedDuration
     }
     
     var canStartRecording: Bool {
@@ -86,21 +86,7 @@ class RecordingViewModel: ObservableObject {
     init() {
         print("🎬 RecordingViewModel INIT started")
         transcriptionService = AppleSpeechTranscriptionService()
-        
-        // Initialize AI analysis service - prefer Apple Intelligence
-        if #available(macOS 15.0, *), AIConfiguration.preferAppleIntelligence {
-            aiAnalysisService = AppleIntelligenceService()
-            print("✅ Using Apple Intelligence (on-device)")
-        } else {
-            // Fallback to OpenAI
-            let apiKey = AIConfiguration.openAIAPIKey
-            aiAnalysisService = LLMAnalysisService(
-                useFoundationModels: false,
-                apiKey: apiKey
-            )
-            print("⚠️ Using OpenAI (Apple Intelligence not available)")
-        }
-        
+
         meetingDetector = MeetingDetector(appMonitor: appMonitor, calendarService: calendarService)
         print("✅ MeetingDetector created")
         loadRecordings()
@@ -252,7 +238,16 @@ class RecordingViewModel: ObservableObject {
     
     func deleteRecording(_ recording: Recording) {
         do {
+            // Delete the recording and associated files from storage
             try storageService.deleteRecording(recording, from: &recordings)
+            
+            // Remove associated transcript from memory
+            transcripts.removeValue(forKey: recording.id)
+            
+            // Remove associated analysis from memory
+            if let transcript = transcripts[recording.id] {
+                analyses.removeValue(forKey: transcript.id)
+            }
         } catch {
             handleError(error)
         }
@@ -298,19 +293,6 @@ class RecordingViewModel: ObservableObject {
         NSWorkspace.shared.activateFileViewerSelecting([recording.fileURL])
     }
     
-    // MARK: - Helpers
-    
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let hours = Int(duration) / 3600
-        let minutes = Int(duration) / 60 % 60
-        let seconds = Int(duration) % 60
-        
-        if hours > 0 {
-            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            return String(format: "%02d:%02d", minutes, seconds)
-        }
-    }
     
     private func handleError(_ error: Error) {
         errorMessage = error.localizedDescription
@@ -547,7 +529,7 @@ class RecordingViewModel: ObservableObject {
                 print("🧠 AI Analysis available: \(available)")
                 
                 if !available {
-                    AIConfiguration.printSetupInstructions()
+                    print("⚠️ Apple Intelligence is unavailable. Enable it in System Settings > Apple Intelligence & Siri.")
                 }
             }
         }

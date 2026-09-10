@@ -5,29 +5,6 @@
 
 import Foundation
 
-protocol TranscriptionService {
-    /// Check if speech recognition is available
-    func checkAvailability() async -> Bool
-    
-    /// Request speech recognition permission
-    func requestPermission() async throws -> Bool
-    
-    /// Transcribe an audio file
-    /// - Parameters:
-    ///   - recording: The recording to transcribe
-    ///   - language: Language for transcription (default: .auto for auto-detection)
-    ///   - progressHandler: Called with progress updates (0.0 to 1.0)
-    /// - Returns: Completed transcript with segments
-    func transcribe(
-        recording: Recording,
-        language: Language,
-        progressHandler: @escaping (Double) -> Void
-    ) async throws -> Transcript
-    
-    /// Cancel ongoing transcription
-    func cancelTranscription(for recordingID: UUID)
-}
-
 // MARK: - Transcription Errors
 
 enum TranscriptionError: LocalizedError {

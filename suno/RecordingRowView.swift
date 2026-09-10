@@ -82,7 +82,7 @@ struct RecordingRowView: View {
                     }
                     .buttonStyle(.borderless)
                     .help("Show in Finder")
-                    
+
                     Button(action: onDelete) {
                         Image(systemName: "trash")
                             .font(.caption)
@@ -91,12 +91,14 @@ struct RecordingRowView: View {
                     .buttonStyle(.borderless)
                     .help("Delete Recording")
                 }
+                .transition(.opacity)
             }
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
         .background(isHovered ? Color.gray.opacity(0.1) : Color.clear)
         .cornerRadius(8)
+        .animation(.easeOut(duration: 0.12), value: isHovered)
         .onHover { hovering in
             isHovered = hovering
         }
