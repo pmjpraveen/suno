@@ -127,5 +127,18 @@ enum Language: String, Codable, CaseIterable, Identifiable {
         guard self != .auto else { return nil }
         return Locale(identifier: rawValue)
     }
-    
+
+    /// Indian languages, in order of speaker count — for a dedicated picker section.
+    static let indianLanguages: [Language] = [
+        .hindi, .bengali, .telugu, .marathi, .tamil, .urdu,
+        .gujarati, .kannada, .malayalam, .punjabi, .odia, .assamese
+    ]
+
+    /// Non-Indian languages — for a dedicated picker section.
+    static let internationalLanguages: [Language] = [
+        .english, .spanish, .french, .german, .italian, .portuguese,
+        .japanese, .korean, .chinese, .russian, .arabic, .dutch,
+        .swedish, .polish, .turkish, .vietnamese, .indonesian, .thai,
+        .danish, .norwegian, .finnish
+    ]
 }

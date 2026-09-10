@@ -20,14 +20,12 @@ struct TranscriptView: View {
             HStack {
                 Text("Transcript")
                     .font(.headline)
-                
+
                 // Language indicator
                 if let transcript = transcript, let language = transcript.language {
-                    Text(language.flag)
-                        .font(.caption)
-                        .help(language.displayName)
+                    languageBadge(for: language)
                 }
-                
+
                 Spacer()
                 
                 if let transcript = transcript {
@@ -51,8 +49,23 @@ struct TranscriptView: View {
         .cornerRadius(8)
     }
     
+    // MARK: - Language Badge
+
+    private func languageBadge(for language: Language) -> some View {
+        HStack(spacing: 4) {
+            Text(language.flag)
+            Text(language.displayName)
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color.secondary.opacity(0.15))
+        .cornerRadius(6)
+    }
+
     // MARK: - Status Badge
-    
+
     @ViewBuilder
     private func statusBadge(for status: TranscriptionStatus) -> some View {
         HStack(spacing: 4) {
@@ -289,7 +302,12 @@ struct TranscriptSegmentView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 60, alignment: .leading)
                 .monospacedDigit()
-            
+
+            // Speaker source (only shown when the recording captured mic + system audio separately)
+            if let source = segment.source {
+                sourceBadge(for: source)
+            }
+
             // Text
             Text(segment.text)
                 .font(.body)
@@ -314,6 +332,17 @@ struct TranscriptSegmentView: View {
         .help(onTap != nil ? "Click to seek to \(segment.formattedTime)" : "")
     }
     
+    private func sourceBadge(for source: AudioSource) -> some View {
+        Text(source == .me ? "You" : "Meeting")
+            .font(.caption2)
+            .fontWeight(.medium)
+            .foregroundStyle(source == .me ? .blue : .purple)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background((source == .me ? Color.blue : Color.purple).opacity(0.12))
+            .cornerRadius(4)
+    }
+
     @ViewBuilder
     private func confidenceIndicator(_ confidence: Float) -> some View {
         let color: Color = {
@@ -342,7 +371,8 @@ struct TranscriptSegmentView: View {
                 TranscriptSegment(text: "What if we add a progress indicator?", startTime: 21.0, duration: 2.8, confidence: 0.92)
             ],
             fullText: "Let's start with the onboarding flow...",
-            completedAt: Date().addingTimeInterval(-300)
+            completedAt: Date().addingTimeInterval(-300),
+            language: .hindi
         ),
         recording: Recording(
             fileName: "Team Meeting.m4a",
