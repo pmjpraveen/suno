@@ -14,7 +14,7 @@ import FoundationModels
 /// AI Analysis service using Apple's on-device Foundation Models
 /// Falls back to basic analysis if Foundation Models are unavailable
 @available(macOS 15.0, *)
-class AppleIntelligenceService: AIAnalysisService {
+class AppleIntelligenceService {
     
     // MARK: - Properties
     
@@ -22,7 +22,7 @@ class AppleIntelligenceService: AIAnalysisService {
         SystemLanguageModel.default
     }
     
-    // MARK: - AIAnalysisService
+    // MARK: - Analysis
     
     func checkAvailability() async -> Bool {
         #if canImport(FoundationModels)

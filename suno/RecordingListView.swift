@@ -10,7 +10,8 @@ import AppKit
 
 struct RecordingListView: View {
     @ObservedObject var viewModel: RecordingViewModel
-    
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -73,25 +74,32 @@ struct RecordingListView: View {
                                 },
                                 transcript: viewModel.getTranscript(for: recording)
                             )
+                            .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .leading)))
                         }
                     }
                     .padding(.vertical, 8)
+                    .animation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.35, dampingFraction: 1.0), value: viewModel.recordings.map(\.id))
                 }
             }
         }
     }
     
     private func deleteRecording(_ recording: Recording) {
-        // Show confirmation alert
-        let alert = NSAlert()
-        alert.messageText = "Delete Recording?"
-        alert.informativeText = "This will permanently delete \"\(recording.fileName)\". This action cannot be undone."
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "Delete")
-        alert.addButton(withTitle: "Cancel")
-        
-        if alert.runModal() == .alertFirstButtonReturn {
-            viewModel.deleteRecording(recording)
+        // Show confirmation alert on main thread
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.messageText = "Delete Recording?"
+            alert.informativeText = "This will permanently delete \"\(recording.displayTitle)\" and any associated transcripts or analysis. This action cannot be undone."
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "Delete")
+            alert.addButton(withTitle: "Cancel")
+            
+            let response = alert.runModal()
+            
+            if response == .alertFirstButtonReturn {
+                // Perform deletion
+                self.viewModel.deleteRecording(recording)
+            }
         }
     }
     

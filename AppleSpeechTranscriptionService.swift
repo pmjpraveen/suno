@@ -7,7 +7,7 @@ import Foundation
 import Speech
 import AVFoundation
 
-class AppleSpeechTranscriptionService: TranscriptionService {
+class AppleSpeechTranscriptionService {
     private var activeRecognizers: [UUID: SFSpeechRecognizer] = [:]
     private var activeTasks: [UUID: SFSpeechRecognitionTask] = [:]
     
@@ -44,16 +44,40 @@ class AppleSpeechTranscriptionService: TranscriptionService {
         progressHandler: @escaping (Double) -> Void
     ) async throws -> Transcript {
         print("🎙️ Starting transcription for: \(recording.fileName)")
+        print("📁 File path: \(recording.fileURL.path)")
         
         // Validate file exists
         guard FileManager.default.fileExists(atPath: recording.fileURL.path) else {
+            print("❌ Audio file not found at path: \(recording.fileURL.path)")
             throw TranscriptionError.audioFileNotFound
         }
         
         // Check file size
-        let fileSize = try? FileManager.default.attributesOfItem(atPath: recording.fileURL.path)[.size] as? Int64
+        let attributes = try? FileManager.default.attributesOfItem(atPath: recording.fileURL.path)
+        let fileSize = attributes?[.size] as? Int64 ?? 0
+        print("📊 File size: \(fileSize) bytes")
+        
         if fileSize == 0 {
+            print("❌ Empty recording file")
             throw TranscriptionError.emptyRecording
+        }
+        
+        // Validate audio file can be opened
+        let audioFile: AVAudioFile
+        do {
+            audioFile = try AVAudioFile(forReading: recording.fileURL)
+            let duration = Double(audioFile.length) / audioFile.fileFormat.sampleRate
+            print("🎵 Audio duration: \(String(format: "%.2f", duration)) seconds")
+            print("🎵 Sample rate: \(audioFile.fileFormat.sampleRate) Hz")
+            print("🎵 Channels: \(audioFile.fileFormat.channelCount)")
+            
+            if duration < 0.5 {
+                print("❌ Recording too short to transcribe")
+                throw TranscriptionError.emptyRecording
+            }
+        } catch {
+            print("❌ Could not open audio file: \(error.localizedDescription)")
+            throw TranscriptionError.transcriptionFailed("Invalid audio file: \(error.localizedDescription)")
         }
         
         // Create recognizer with specified language
@@ -61,19 +85,24 @@ class AppleSpeechTranscriptionService: TranscriptionService {
         if language == .auto, let locale = language.locale {
             // Auto-detect: use default system locale
             recognizer = SFSpeechRecognizer()
+            print("🌍 Using auto-detection with system locale")
         } else if let locale = language.locale {
             // Use specified language locale
             recognizer = SFSpeechRecognizer(locale: locale)
+            print("🌍 Using language: \(language.displayName) (\(locale.identifier))")
         } else {
             // Fallback to default recognizer for auto-detect
             recognizer = SFSpeechRecognizer()
+            print("🌍 Using default system recognizer")
         }
         
         guard let recognizer = recognizer else {
+            print("❌ Speech recognizer unavailable")
             throw TranscriptionError.speechRecognitionUnavailable
         }
         
         guard recognizer.isAvailable else {
+            print("❌ Language not supported: \(language.displayName)")
             throw TranscriptionError.languageNotSupported(language.displayName)
         }
         
@@ -88,6 +117,7 @@ class AppleSpeechTranscriptionService: TranscriptionService {
         // If available, use on-device recognition
         if #available(macOS 13.0, *) {
             request.requiresOnDeviceRecognition = false  // Allow server if needed
+            print("🖥️ On-device recognition: fallback to server if needed")
         }
         
         var transcript = Transcript(
@@ -96,15 +126,24 @@ class AppleSpeechTranscriptionService: TranscriptionService {
             requestedLanguage: language
         )
         
+        print("🚀 Starting recognition task...")
+        
         return try await withCheckedThrowingContinuation { continuation in
+            var hasResumed = false
+            
             let task = recognizer.recognitionTask(with: request) { result, error in
+                // Prevent multiple resumes
+                guard !hasResumed else { return }
+                
                 if let error = error {
                     print("❌ Transcription error: \(error.localizedDescription)")
                     
                     // Check if cancelled
                     if (error as NSError).code == 1110 {
+                        hasResumed = true
                         continuation.resume(throwing: TranscriptionError.cancelled)
                     } else {
+                        hasResumed = true
                         continuation.resume(throwing: TranscriptionError.transcriptionFailed(error.localizedDescription))
                     }
                     return
@@ -116,13 +155,16 @@ class AppleSpeechTranscriptionService: TranscriptionService {
                 if result.isFinal {
                     progressHandler(1.0)
                 } else {
-                    // Estimate progress based on best transcription length
+                    // Estimate progress based on transcription length and recording duration
                     let estimatedProgress = min(0.9, Double(result.bestTranscription.formattedString.count) / 1000.0)
                     progressHandler(estimatedProgress)
                 }
                 
+                // Only complete when we have final results
                 if result.isFinal {
                     print("✅ Transcription complete!")
+                    print("📝 Transcribed text length: \(result.bestTranscription.formattedString.count) characters")
+                    print("📊 Segment count: \(result.bestTranscription.segments.count)")
                     
                     // Group segments into natural phrases
                     let segments = self.groupSegments(result.bestTranscription.segments)
@@ -133,12 +175,26 @@ class AppleSpeechTranscriptionService: TranscriptionService {
                     transcript.completedAt = Date()
                     transcript.progress = 1.0
                     
+                    hasResumed = true
                     continuation.resume(returning: transcript)
+                    
+                    // Clean up
+                    self.activeTasks.removeValue(forKey: recording.id)
+                    self.activeRecognizers.removeValue(forKey: recording.id)
                 }
             }
             
             // Store task for cancellation
             self.activeTasks[recording.id] = task
+            
+            // Add timeout for very long recordings (2 hours)
+            Task {
+                try? await Task.sleep(nanoseconds: 7_200_000_000_000) // 2 hours
+                if !hasResumed {
+                    print("⏱️ Transcription timeout reached")
+                    task.cancel()
+                }
+            }
         }
     }
     

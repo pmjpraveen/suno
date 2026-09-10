@@ -151,8 +151,9 @@ struct MeetingRow: View {
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
             )
+            .animation(.spring(response: 0.25, dampingFraction: 1.0), value: isSelected)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
     }
     
     private var iconName: String {

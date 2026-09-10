@@ -1,0 +1,162 @@
+//
+//  SettingsWindowView.swift
+//  suno
+//
+
+import SwiftUI
+
+struct SettingsWindowView: View {
+    @ObservedObject var viewModel: RecordingViewModel
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                // Permissions Section
+                section(title: "Permissions") {
+                    VStack(spacing: 12) {
+                        // Microphone Permission
+                        HStack {
+                            Image(systemName: "mic.fill")
+                                .foregroundStyle(.blue)
+                                .frame(width: 24)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Microphone")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                Text(viewModel.hasPermission ? "Granted" : "Not Granted")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            if !viewModel.hasPermission {
+                                Button("Grant") {
+                                    viewModel.requestPermission()
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            } else {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                            }
+                        }
+                        .padding(12)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(8)
+
+                        // Accessibility Permission (for meeting detection)
+                        HStack {
+                            Image(systemName: "hand.raised.fill")
+                                .foregroundStyle(.orange)
+                                .frame(width: 24)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Accessibility")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                Text("For meeting detection")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Button("Configure") {
+                                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                        .padding(12)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(8)
+                    }
+                }
+
+                // Audio Format Section
+                section(title: "Audio Format") {
+                    Picker("Format", selection: $viewModel.selectedFormat) {
+                        ForEach(AudioFormat.allCases, id: \.self) { format in
+                            Text(format.displayName).tag(format)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(12)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(8)
+                }
+
+                // Language Section (Placeholder for future transcription)
+                section(title: "Transcription") {
+                    HStack {
+                        Image(systemName: "text.bubble")
+                            .foregroundStyle(.purple)
+                            .frame(width: 24)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Language")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            Text("English (US)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Text("Coming Soon")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.secondary.opacity(0.2))
+                            .cornerRadius(4)
+                    }
+                    .padding(12)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(8)
+                }
+
+                Spacer(minLength: 20)
+
+                // Quit Button
+                Button(action: {
+                    NSApp.terminate(nil)
+                }) {
+                    HStack {
+                        Image(systemName: "power")
+                        Text("Quit Suno")
+                    }
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(8)
+                }
+                .buttonStyle(.pressable)
+            }
+            .padding(20)
+        }
+        .frame(minWidth: 380, minHeight: 420)
+    }
+
+    @ViewBuilder
+    private func section<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+
+            content()
+        }
+    }
+}
+
+#Preview {
+    SettingsWindowView(viewModel: RecordingViewModel())
+}

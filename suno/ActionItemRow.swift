@@ -19,8 +19,9 @@ struct ActionItemRow: View {
                 Image(systemName: actionItem.completed ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
                     .foregroundStyle(actionItem.completed ? .green : .secondary)
+                    .contentTransition(.symbolEffect(.replace))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressable)
             .help(actionItem.completed ? "Mark as incomplete" : "Mark as complete")
             
             VStack(alignment: .leading, spacing: 6) {
