@@ -57,6 +57,11 @@ class RecordingStorageService {
         let fileName = "\(UUID().uuidString).\(format.fileExtension)"
         return recordingsDirectory.appendingPathComponent(fileName)
     }
+
+    /// Companion file for the same recording's captured system audio.
+    func systemAudioFileURL(for micFileURL: URL) -> URL {
+        micFileURL.deletingPathExtension().appendingPathExtension("system.caf")
+    }
     
     func getFileSize(at url: URL) -> Int64 {
         guard let attributes = try? fileManager.attributesOfItem(atPath: url.path),
@@ -105,7 +110,12 @@ class RecordingStorageService {
         if fileManager.fileExists(atPath: recording.fileURL.path) {
             try deleteAudioFile(at: recording.fileURL)
         }
-        
+
+        // Delete companion system-audio file, if this recording captured one
+        if let systemAudioURL = recording.systemAudioFileURL, fileManager.fileExists(atPath: systemAudioURL.path) {
+            try? deleteAudioFile(at: systemAudioURL)
+        }
+
         // Delete associated transcript file if it exists
         let transcriptURL = applicationSupportDirectory
             .appendingPathComponent("Transcripts")

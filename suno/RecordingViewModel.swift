@@ -25,7 +25,9 @@ class RecordingViewModel: ObservableObject {
     
     // MARK: - Published State
     @Published var recordings: [Recording] = []
-    @Published var selectedFormat: AudioFormat = .m4a
+    @Published var selectedFormat: AudioFormat = .m4a {
+        didSet { UserDefaults.standard.set(selectedFormat.rawValue, forKey: "selectedAudioFormat") }
+    }
     @Published var errorMessage: String?
     @Published var isShowingError = false
     
@@ -40,7 +42,10 @@ class RecordingViewModel: ObservableObject {
     // Transcription
     @Published var transcripts: [UUID: Transcript] = [:]  // Recording ID -> Transcript
     @Published var hasSpeechPermission: Bool = false
-    @Published var selectedLanguage: Language = .auto
+    @Published var hasSystemAudioPermission: Bool = SystemAudioCapture.hasPermission
+    @Published var selectedLanguage: Language = .auto {
+        didSet { UserDefaults.standard.set(selectedLanguage.rawValue, forKey: "selectedTranscriptionLanguage") }
+    }
     
     // AI Analysis
     @Published var analyses: [UUID: MeetingAnalysis] = [:]  // Transcript ID -> Analysis
@@ -91,6 +96,7 @@ class RecordingViewModel: ObservableObject {
         print("✅ MeetingDetector created")
         loadRecordings()
         loadSelectedFormat()
+        loadSelectedLanguage()
         loadTranscripts()
         loadAnalyses()
         setupCalendarService()
@@ -264,27 +270,37 @@ class RecordingViewModel: ObservableObject {
     }
     
     // MARK: - Format Management
-    
-    func selectFormat(_ format: AudioFormat) {
-        selectedFormat = format
-        saveSelectedFormat()
-    }
-    
-    private func saveSelectedFormat() {
-        UserDefaults.standard.set(selectedFormat.rawValue, forKey: "selectedAudioFormat")
-    }
-    
+
     private func loadSelectedFormat() {
         if let formatString = UserDefaults.standard.string(forKey: "selectedAudioFormat"),
            let format = AudioFormat(rawValue: formatString) {
             selectedFormat = format
         }
     }
+
+    // MARK: - Language Management
+
+    private func loadSelectedLanguage() {
+        if let languageString = UserDefaults.standard.string(forKey: "selectedTranscriptionLanguage"),
+           let language = Language(rawValue: languageString) {
+            selectedLanguage = language
+        }
+    }
     
     // MARK: - Permission
-    
+
     func requestPermission() {
         audioService.requestPermission()
+    }
+
+    /// Re-polls Screen & System Audio Recording status — call when a Settings screen
+    /// showing this permission appears, in case the user just granted it.
+    func refreshSystemAudioPermission() {
+        hasSystemAudioPermission = SystemAudioCapture.hasPermission
+    }
+
+    func requestSystemAudioPermission() {
+        SystemAudioCapture.requestPermission()
     }
     
     // MARK: - File Actions

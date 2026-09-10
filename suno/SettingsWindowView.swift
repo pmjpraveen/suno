@@ -72,6 +72,40 @@ struct SettingsWindowView: View {
                         .padding(12)
                         .background(.ultraThinMaterial)
                         .cornerRadius(8)
+
+                        // System Audio Permission (captures meeting participants cleanly,
+                        // instead of the mic re-picking up speaker output)
+                        HStack {
+                            Image(systemName: "waveform.badge.person.fill")
+                                .foregroundStyle(.teal)
+                                .frame(width: 24)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("System Audio")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                Text("Captures meeting audio cleanly, not through the mic")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            if viewModel.hasSystemAudioPermission {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                            } else {
+                                Button("Configure") {
+                                    viewModel.requestSystemAudioPermission()
+                                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            }
+                        }
+                        .padding(12)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(8)
                     }
                 }
 
@@ -88,7 +122,7 @@ struct SettingsWindowView: View {
                     .cornerRadius(8)
                 }
 
-                // Language Section (Placeholder for future transcription)
+                // Language Section
                 section(title: "Transcription") {
                     HStack {
                         Image(systemName: "text.bubble")
@@ -99,20 +133,30 @@ struct SettingsWindowView: View {
                             Text("Language")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                            Text("English (US)")
+                            Text("Used for speech-to-text transcription")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
 
                         Spacer()
 
-                        Text("Coming Soon")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.secondary.opacity(0.2))
-                            .cornerRadius(4)
+                        Picker("Language", selection: $viewModel.selectedLanguage) {
+                            Text("\(Language.auto.flag) Auto-Detect").tag(Language.auto)
+
+                            Section("Indian Languages") {
+                                ForEach(Language.indianLanguages) { language in
+                                    Text("\(language.flag) \(language.displayName)").tag(language)
+                                }
+                            }
+
+                            Section("International") {
+                                ForEach(Language.internationalLanguages) { language in
+                                    Text("\(language.flag) \(language.displayName)").tag(language)
+                                }
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(maxWidth: 160)
                     }
                     .padding(12)
                     .background(.ultraThinMaterial)
@@ -141,6 +185,9 @@ struct SettingsWindowView: View {
             .padding(20)
         }
         .frame(minWidth: 380, minHeight: 420)
+        .onAppear {
+            viewModel.refreshSystemAudioPermission()
+        }
     }
 
     @ViewBuilder

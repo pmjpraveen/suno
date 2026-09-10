@@ -16,7 +16,11 @@ struct Recording: Identifiable, Codable {
     var endTime: Date?
     var duration: TimeInterval
     var fileSize: Int64
-    
+
+    /// Separately-captured system audio (the other participants), when Screen &
+    /// System Audio Recording permission was granted. Nil for mic-only recordings.
+    var systemAudioFileURL: URL?
+
     // Calendar integration
     var calendarEventID: String?
     var meetingTitle: String?
@@ -35,6 +39,7 @@ struct Recording: Identifiable, Codable {
         endTime: Date? = nil,
         duration: TimeInterval = 0,
         fileSize: Int64 = 0,
+        systemAudioFileURL: URL? = nil,
         calendarEventID: String? = nil,
         meetingTitle: String? = nil,
         meetingParticipants: [String]? = nil,
@@ -49,6 +54,7 @@ struct Recording: Identifiable, Codable {
         self.endTime = endTime
         self.duration = duration
         self.fileSize = fileSize
+        self.systemAudioFileURL = systemAudioFileURL
         self.calendarEventID = calendarEventID
         self.meetingTitle = meetingTitle
         self.meetingParticipants = meetingParticipants

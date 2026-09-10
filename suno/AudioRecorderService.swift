@@ -25,6 +25,9 @@ class AudioRecorderService: NSObject {
     
     private var currentRecordingURL: URL?
     private var currentFormat: AudioFormat = .m4a
+
+    private let systemAudioCapture = SystemAudioCapture()
+    private var currentSystemAudioURL: URL?
     
     override init() {
         super.init()
@@ -90,16 +93,31 @@ class AudioRecorderService: NSObject {
         guard audioRecorder?.record() == true else {
             throw RecordingError.recordingFailed
         }
-        
+
+        // Capture system audio (the other meeting participants) alongside the mic, if
+        // permission has been granted. Non-fatal if it fails — the mic recording still works.
+        if SystemAudioCapture.hasPermission {
+            let systemAudioURL = RecordingStorageService.shared.systemAudioFileURL(for: url)
+            currentSystemAudioURL = systemAudioURL
+            do {
+                try await systemAudioCapture.start(writingTo: systemAudioURL)
+            } catch {
+                print("⚠️ System audio capture failed to start: \(error.localizedDescription)")
+                currentSystemAudioURL = nil
+            }
+        } else {
+            currentSystemAudioURL = nil
+        }
+
         // Update state
         recordingState = .recording
         recordingStartTime = Date()
         currentDuration = 0
         pausedDuration = 0
-        
+
         // Start timer
         startTimer()
-        
+
         errorMessage = nil
     }
     
@@ -131,24 +149,25 @@ class AudioRecorderService: NSObject {
         
         stopTimer()
         audioRecorder?.stop()
-        
+        let systemAudioURL = await systemAudioCapture.stop()
+
         recordingState = .stopped
-        
+
         // Calculate final duration
         let endTime = Date()
         guard let startTime = recordingStartTime else {
             throw RecordingError.recordingFailed
         }
-        
+
         let totalDuration = endTime.timeIntervalSince(startTime) - pausedDuration
-        
+
         // Get file URL and size
         guard let fileURL = currentRecordingURL else {
             throw RecordingError.fileCreationFailed
         }
-        
+
         let fileSize = RecordingStorageService.shared.getFileSize(at: fileURL)
-        
+
         // Create recording metadata
         let recording = Recording(
             fileName: fileURL.lastPathComponent,
@@ -158,14 +177,15 @@ class AudioRecorderService: NSObject {
             endTime: endTime,
             duration: totalDuration,
             fileSize: fileSize,
+            systemAudioFileURL: systemAudioURL,
             calendarEventID: nil,
             meetingTitle: nil,
             meetingParticipants: nil
         )
-        
+
         // Reset state
         resetRecordingState()
-        
+
         return recording
     }
     
@@ -176,12 +196,20 @@ class AudioRecorderService: NSObject {
         
         stopTimer()
         audioRecorder?.stop()
-        
+
         // Delete the file
         if let url = currentRecordingURL {
             try? RecordingStorageService.shared.deleteAudioFile(at: url)
         }
-        
+
+        let systemAudioURL = currentSystemAudioURL
+        Task {
+            _ = await systemAudioCapture.stop()
+            if let systemAudioURL {
+                try? RecordingStorageService.shared.deleteAudioFile(at: systemAudioURL)
+            }
+        }
+
         resetRecordingState()
     }
     
@@ -227,6 +255,7 @@ class AudioRecorderService: NSObject {
         recordingStartTime = nil
         pauseStartTime = nil
         currentRecordingURL = nil
+        currentSystemAudioURL = nil
         audioRecorder = nil
     }
 }
